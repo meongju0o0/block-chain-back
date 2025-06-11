@@ -78,24 +78,26 @@ def get_reviewers_of_paper (db : Session, paper_id : int) :
     return db.query(models.Reviewer).filter(models.Reviewer.paper_id == paper_id).all()
 
 # comment
-def create_comment (db : Session, comment : schemas.CommentCreate) : 
+def create_comment(db: Session, comment_in: schemas.CommentCreate, paper_ipfs: str) -> models.Comment:
     db_comment = models.Comment(
-        paper_id = comment.paper_id,
-        reviewer_id = comment.reviewer_id,
-        ipfs_hash = comment.ipfs_hash
+        paper_id=comment_in.paper_id,
+        reviewer_id=comment_in.reviewer_id,
+        content=comment_in.content,
+        ipfs_hash=paper_ipfs,    # 전달받은 paper ipfs_hash
     )
     db.add(db_comment)
     db.commit()
     db.refresh(db_comment)
     return db_comment
 
-def get_comments_of_paper (db : Session, paper_id : int) : 
-    return db.query(models.Comment).filter(models.Comment.paper_id == paper_id).all()
 
-def update_comment_tx_hash (db : Session, comment_id : int, tx_hash : str) :
-    # 나중에 block 등록 후 hash값 등록
-    comment = db.query(models.Paper).filter(models.Comment.id == comment_id).first()
-    comment.tx_hash = tx_hash
-    db.commit()
-    db.refresh(comment)
+def update_comment_tx_hash(db: Session, comment_id: int, tx_hash: str) -> models.Comment:
+    comment = db.query(models.Comment).filter(models.Comment.id == comment_id).first()
+    if comment:
+        comment.tx_hash = tx_hash
+        db.commit()
+        db.refresh(comment)
     return comment
+
+def get_comments_of_paper(db: Session, paper_id: int):
+    return db.query(models.Comment).filter(models.Comment.paper_id == paper_id).all()

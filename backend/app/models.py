@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Text
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone 
 
@@ -50,11 +50,11 @@ class Comment(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     paper_id = Column(Integer, ForeignKey("papers.id"), nullable=False)
-    reviewer_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # 참조를 users.id로 변경
-    ipfs_hash = Column(String, nullable=False)
+    reviewer_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    content = Column(Text, nullable=False)     # 사용자가 작성한 코멘트
+    ipfs_hash = Column(String, nullable=False) # paper.ipfs_hash 복사
     tx_hash = Column(String, nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
-    # Relations
-    paper = relationship("Paper", back_populates="comments")
-    reviewer = relationship("User", back_populates="comments", foreign_keys=[reviewer_id])
+    paper    = relationship("Paper", back_populates="comments")
+    reviewer = relationship("User",  back_populates="comments", foreign_keys=[reviewer_id])

@@ -1,13 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status, Form
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status, Form, Response
 from sqlalchemy.orm import Session
 from typing import List
 
-from .. import crud, schemas, models
+from .. import crud, schemas
 from ..database import get_database
 from ..ipfs import ipfs_client
 from ..blockchain import blockchain_client
 
-# Prefix correctly set
 router = APIRouter(prefix="/api/v1/papers", tags=["papers"])
 
 @router.post("/", response_model=schemas.PaperDetail, status_code=status.HTTP_201_CREATED)
@@ -47,6 +46,15 @@ async def create_paper(
     db_paper.reviewers = assigned
     return db_paper
 
+
+@router.get("/", response_model=List[schemas.PaperDetail])
+def list_papers(skip: int = 0, limit: int = 100, db: Session = Depends(get_database)):
+    papers = crud.get_all_papers(db, skip=skip, limit=limit)
+    for p in papers:
+        p.reviewers = crud.get_reviewers_of_paper(db, p.id)
+    return papers
+
+
 @router.get("/{paper_id}", response_model=schemas.PaperDetail)
 def get_paper_detail(paper_id: int, db: Session = Depends(get_database)):
     paper = crud.get_paper(db, paper_id)
@@ -57,9 +65,16 @@ def get_paper_detail(paper_id: int, db: Session = Depends(get_database)):
     paper.reviewers = reviewers
     return paper
 
-@router.get("/", response_model=List[schemas.PaperDetail])
-def list_papers(skip: int = 0, limit: int = 100, db: Session = Depends(get_database)):
-    papers = crud.get_all_papers(db, skip=skip, limit=limit)
-    for p in papers:
-        p.reviewers = crud.get_reviewers_of_paper(db, p.id)
-    return papers
+
+@router.get("/{paper_id}/download", response_class=Response)
+def download_paper_pdf(paper_id: int, db: Session = Depends(get_database)):
+    paper = crud.get_paper(db, paper_id)
+    if not paper:
+        raise HTTPException(status_code=404, detail="Not found paper")
+
+    try:
+        pdf_bytes = ipfs_client.get_file(paper.ipfs_hash)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"IPFS 다운로드 실패: {e}")
+
+    return Response(content=pdf_bytes, media_type="application/pdf")

@@ -30,7 +30,6 @@ class BlockChain_Client:
         pending = self.w3.eth.get_block('pending')
         base_fee = pending['baseFeePerGas']
         max_priority_fee = self.w3.to_wei('2', 'gwei')
-        # maxFeePerGas은 base_fee * 2 + tip 정도로 설정
         max_fee = base_fee * 2 + max_priority_fee
 
         txn = self.paper_contract.functions.submitPaper(
@@ -51,6 +50,11 @@ class BlockChain_Client:
     def submit_comment(self, comment_id: int, paper_id: int, reviewer_wallet: str, ipfs_hash: str) -> str:
         nonce = self.w3.eth.get_transaction_count(self.account)
 
+        pending = self.w3.eth.get_block('pending')
+        base_fee = pending['baseFeePerGas']
+        max_priority_fee = self.w3.to_wei('2', 'gwei')
+        max_fee = base_fee * 2 + max_priority_fee
+
         txn = self.comment_contract.functions.submitComment(
             comment_id,
             paper_id,
@@ -59,12 +63,15 @@ class BlockChain_Client:
         ).build_transaction({
             "chainId": self.chain_id,
             "gas": 200_000,
-            "gasPrice": self.w3.to_wei("2", "gwei"),
+            "maxPriorityFeePerGas": max_priority_fee,
+            "maxFeePerGas": max_fee,
             "nonce": nonce,
         })
 
-        signed_txn = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
-        tx_hash = self.w3.eth.send_raw_transaction(signed_txn.raw_transaction)
+        # 3) 서명 및 전송
+        signed = self.w3.eth.account.sign_transaction(txn, private_key=self.private_key)
+        tx_hash = self.w3.eth.send_raw_transaction(signed.raw_transaction)
+
         return tx_hash.hex()
 
 
