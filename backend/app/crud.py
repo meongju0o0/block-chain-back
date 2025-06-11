@@ -27,8 +27,13 @@ def get_user_by_username_and_wallet (db : Session, username : str, wallet_addres
     )
 
 # paper
-def create_paper (db : Session, paper : schemas.PaperCreate) : 
-    db_paper = models.Paper(ipfs_hash = paper.ipfs_hash, owner_id = paper.owner_id)
+def create_paper(db: Session, paper: schemas.PaperCreate):
+    db_paper = models.Paper(
+        title=paper.title,
+        summary=paper.summary,
+        ipfs_hash=paper.ipfs_hash,
+        owner_id=paper.owner_id,
+    )
     db.add(db_paper)
     db.commit()
     db.refresh(db_paper)

@@ -20,6 +20,8 @@ class Paper(Base):
     __tablename__ = "papers"
 
     id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False)
+    summary = Column(String, nullable=False)
     ipfs_hash = Column(String, nullable=False)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     tx_hash = Column(String, nullable=True, index=True)

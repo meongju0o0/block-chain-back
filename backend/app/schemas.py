@@ -27,6 +27,8 @@ class UserAuth (BaseModel) :
 
 # paper
 class PaperBase (BaseModel) : 
+    title : str
+    summary : str
     ipfs_hash : str
 
 class PaperCreate (PaperBase) : 
@@ -79,3 +81,7 @@ class ReviewerInDB (BaseModel) :
 
 class PaperDetail (PaperInDB) : 
     reviewers : List[ReviewerInDB] = []
+
+    model_config = {
+        "from_attributes" : True
+    }

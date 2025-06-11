@@ -13,7 +13,6 @@ app = FastAPI(
 
 origins = [
     "http://localhost:3000",  # React 개발서버 주소
-    # 필요하다면 와일드카드 "*" 쓰셔도 됩니다만, 개발 단계에서만 권장
 ]
 
 app.add_middleware(
