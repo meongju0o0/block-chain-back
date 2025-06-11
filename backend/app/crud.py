@@ -53,6 +53,9 @@ def update_paper_tx_hash (db : Session, paper_id : int, tx_hash : str) :
     db.refresh(paper)
     return paper
 
+# get papers by owner
+def get_papers_by_owner(db: Session, owner_id: int):
+    return db.query(models.Paper).filter(models.Paper.owner_id == owner_id).all()
 
 # reviewer
 def assign_reviewers (db : Session, paper_id : int, num_reviewers : int = 3) : 

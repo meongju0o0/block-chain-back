@@ -78,3 +78,20 @@ def download_paper_pdf(paper_id: int, db: Session = Depends(get_database)):
         raise HTTPException(status_code=502, detail=f"IPFS 다운로드 실패: {e}")
 
     return Response(content=pdf_bytes, media_type="application/pdf")
+
+@router.get(
+    "/owner/{owner_id}",
+    response_model=List[schemas.PaperDetail],
+    status_code=status.HTTP_200_OK
+)
+def list_papers_by_owner(
+    owner_id: int,
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_database)
+):
+    papers = crud.get_papers_by_owner(db, owner_id)
+    papers = papers[skip : skip + limit]
+    for p in papers:
+        p.reviewers = crud.get_reviewers_of_paper(db, p.id)
+    return papers
